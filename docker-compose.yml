@@ -1,0 +1,19 @@
+version: '3.9'
+services:
+  user:
+    build: .
+    container_name: core_users
+    restart: always
+    hostname: users
+    ports:
+     - "4001:4001"
+    networks:
+      - backend
+    links:
+      - shard1svr1
+      - shard1svr2
+      - shard1svr3
+networks:
+  backend:
+    name: microserver_backend
+    driver: bridge

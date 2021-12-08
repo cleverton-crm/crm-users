@@ -76,6 +76,7 @@ export class UserService {
       const user = await this.findOneUserByEmail(loginData);
       await this.comparePassword(loginData, user);
       const token = await this.generateToken(user);
+      console.log(token);
       await this.saveToken(user.email, token);
       result = {
         statusCode: HttpStatus.OK,
