@@ -1891,8 +1891,11 @@ cookiejar@^2.1.2:
   integrity sha512-JxbCBUdrfr6AQjOXrxoTvAMJO4HBTUIlBzslcJPAz+/KT8yk53fXun51u+RenNYvad/+Vc2DIz5o9UxlCDymFQ==
 
 "core-types@https://github.com/cleverdeus/core-types.git":
-  version "0.0.0"
-  resolved "https://github.com/cleverdeus/core-types.git#4c479e09142837034550d111b9e0b12438232e70"
+  version "1.0.0"
+  resolved "https://github.com/cleverdeus/core-types.git#901dea7fa777c79081251eb7ba3e853f44aa0537"
+  dependencies:
+    mongodb "^4.2.1"
+    mongoose "^6.1.0"
 
 core-util-is@~1.0.0:
   version "1.0.3"
@@ -4028,7 +4031,7 @@ mongodb@4.1.4:
   optionalDependencies:
     saslprep "^1.0.3"
 
-mongodb@^4.2.1:
+mongodb@4.2.1, mongodb@^4.2.1:
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-4.2.1.tgz#c167db158ab0bf6552b3f9c91b396cb4100c2f04"
   integrity sha512-nDC+ulM/Ea3Q2VG5eemuGfB7T4ORwrtKegH2XW9OLlUBgQF6OTNrzFCS1Z3SJGVA+T0Sr1xBYV6DMnp0A7us0g==
@@ -4059,6 +4062,21 @@ mongoose@^6.0.14:
     bson "^4.2.2"
     kareem "2.3.2"
     mongodb "4.1.4"
+    mpath "0.8.4"
+    mquery "4.0.0"
+    ms "2.1.2"
+    regexp-clone "1.0.0"
+    sift "13.5.2"
+    sliced "1.0.1"
+
+mongoose@^6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-6.1.0.tgz#958a2cdf126cf1af4bae576e9331e58bb03b434d"
+  integrity sha512-w3lA9ua4nD0qnsl+p4ExnK7wf/+BBFAiv/V/ufiWbV5qe1GT/IUzvP7E9rhxlBpTKL81M501wrrUr3Nc1dvBxw==
+  dependencies:
+    bson "^4.2.2"
+    kareem "2.3.2"
+    mongodb "4.2.1"
     mpath "0.8.4"
     mquery "4.0.0"
     ms "2.1.2"

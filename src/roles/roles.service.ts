@@ -4,10 +4,12 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { ROLE_NAME_CONFLICT } from '../exceptions/roles.exception';
 import { cyan, red } from 'cli-color';
+import { Core } from 'core-types/global';
+import { User } from 'core-types/user';
 
 @Injectable()
 export class RolesService {
-  private roleModel: RolesModel<Roles>;
+  private readonly roleModel: RolesModel<Roles>;
   private logger = new Logger(RolesService.name);
 
   constructor(@InjectConnection() private connection: Connection) {
@@ -21,7 +23,7 @@ export class RolesService {
    */
   async createRole(
     createRole: User.Roles.Params.CreateData,
-  ): Promise<User.Response.Success | User.Response.BadRequest> {
+  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     let result;
 
     const role = new this.roleModel(createRole);

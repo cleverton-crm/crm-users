@@ -1,12 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, model, PaginateModel } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from 'core-types/user';
 
 @Schema({
   collation: { locale: 'en_US', strength: 1, caseLevel: true },
   timestamps: true,
 })
-export class User extends Document {
+export class Users extends Document {
   @Prop({ type: String, default: uuidv4 })
   _id: string; // UUID v4
 
@@ -56,9 +57,9 @@ export class User extends Document {
   register: Map<string, string>; // Registration data: IP, Location, Address, City and more
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(Users);
 export type UserModel<T extends Document> = PaginateModel<T>;
-export const UserModel: UserModel<User> = model<User>(
+export const UserModel: UserModel<Users> = model<Users>(
   'User',
   UserSchema,
-) as UserModel<User>;
+) as UserModel<Users>;

@@ -1,4 +1,4 @@
-import { User, UserSchema } from './user.schema';
+import { Users, UserSchema } from './user.schema';
 import * as bcrypt from 'bcryptjs';
 
 export const UserProvider = {
@@ -6,7 +6,7 @@ export const UserProvider = {
   useFactory: () => {
     UserSchema.set('toJSON', { virtuals: true });
     UserSchema.set('toObject', { virtuals: true });
-    UserSchema.pre<User>('save', async function (next) {
+    UserSchema.pre<Users>('save', async function (next) {
       try {
         if (!this.isModified('password')) {
           return next();

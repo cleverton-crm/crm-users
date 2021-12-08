@@ -6,7 +6,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2017",
+    "target": "es2019",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
@@ -14,7 +14,6 @@
     "skipLibCheck": true,
     "typeRoots": [
       "./types",
-      "node_modules/core-types",
       "node_modules/@types"
     ]
   }
