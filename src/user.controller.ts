@@ -1,6 +1,8 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern } from '@nestjs/microservices';
+import { User } from 'core-types/user';
+import { Core } from 'core-types/global';
 
 @Controller()
 export class UserController {
@@ -9,7 +11,7 @@ export class UserController {
   @MessagePattern('user:register')
   async registerUser(
     userData: User.Params.CreateData,
-  ): Promise<User.Response.Success | User.Response.BadRequest> {
+  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     return await this.userService.registration(userData);
   }
 
@@ -21,7 +23,7 @@ export class UserController {
   @MessagePattern('user:create')
   async createUser(
     userData: User.Params.CreateData,
-  ): Promise<User.Response.Success | User.Response.BadRequest> {
+  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     console.log('TEST', userData);
     return await this.userService.createUser(userData);
   }

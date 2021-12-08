@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { User, UserModel } from './schemas/user.schema';
+import { UserModel, Users } from './schemas/user.schema';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -21,10 +21,12 @@ import { ResponseSuccessData } from './helpers/global';
 import * as bcrypt from 'bcryptjs';
 import { addHours } from 'date-fns';
 import { ConfigService } from './config/config.service';
+import { Core } from 'core-types/global';
+import { User } from 'core-types/user';
 
 @Injectable()
 export class UserService {
-  private userModel: UserModel<User>;
+  private userModel: UserModel<Users>;
   private logger = new Logger(UserService.name);
 
   constructor(
@@ -32,7 +34,7 @@ export class UserService {
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {
-    this.userModel = this.connection.model('User') as UserModel<User>;
+    this.userModel = this.connection.model('User') as UserModel<Users>;
   }
 
   /**
@@ -41,7 +43,7 @@ export class UserService {
    */
   async registration(
     signUpUser: User.Params.CreateData,
-  ): Promise<User.Response.Success | User.Response.BadRequest> {
+  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     let result;
 
     const user = new this.userModel(signUpUser);
@@ -96,8 +98,8 @@ export class UserService {
    */
   async comparePassword(
     enteredData: User.Params.CreateData,
-    dbData: User,
-  ): Promise<boolean | User.Response.BadRequest> {
+    dbData: Users,
+  ): Promise<boolean | Core.Response.BadRequest> {
     const passwordVerify = await bcrypt.compare(
       enteredData.password,
       dbData.password,
@@ -125,7 +127,7 @@ export class UserService {
    */
   async createUser(
     createUser: User.Params.CreateData,
-  ): Promise<User.Response.Success | User.Response.BadRequest> {
+  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     let result;
 
     const user = new this.userModel(createUser);
@@ -154,7 +156,7 @@ export class UserService {
   async updateUser(
     id: string,
     updateData: User.Params.PasswordData,
-  ): Promise<User.Response.Success | User.Response.NotFound> {
+  ): Promise<Core.Response.Success | Core.Response.NotFound> {
     const user = await this.userModel
       .findOneAndUpdate({ _id: id }, updateData)
       .exec();
@@ -187,7 +189,7 @@ export class UserService {
    * Generating token for access in system
    * @param {User} user
    */
-  private async generateToken(user: User): Promise<any> {
+  private async generateToken(user: Users): Promise<any> {
     const payload = this.payLoad(user);
     const access = this.jwtService.sign(payload, {
       expiresIn: this.configService.get('jwt_access'),
@@ -203,7 +205,7 @@ export class UserService {
     return { access: access, refresh: refresh };
   }
 
-  private payLoad(user: User) {
+  private payLoad(user: Users) {
     const rolesName = [];
     user.roles.forEach((value: any, index: number) => {
       rolesName.push({ name: value.name });
