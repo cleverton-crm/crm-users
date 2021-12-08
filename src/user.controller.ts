@@ -10,7 +10,12 @@ export class UserController {
   async registerUser(
     userData: User.Params.CreateData,
   ): Promise<User.Response.Success | User.Response.BadRequest> {
-    return await this.userService.regUser(userData);
+    return await this.userService.registration(userData);
+  }
+
+  @MessagePattern('user:login')
+  async loginUser(userData: User.Params.CreateData) {
+    return await this.userService.login(userData);
   }
 
   @MessagePattern('user:create')

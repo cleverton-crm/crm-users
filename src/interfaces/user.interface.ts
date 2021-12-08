@@ -27,6 +27,9 @@ namespace User {
       userId: string;
       data: User.Params.PasswordData;
     }
+    export interface EmailData {
+      email: string;
+    }
 
     /**
      * Changing the user password when the master password is available
@@ -46,6 +49,13 @@ namespace User {
   }
 
   export type IUserRolesArray = IUserRoles[];
+
+  export namespace TokenKeys {
+    export interface Authorization {
+      access: string;
+      refresh: string;
+    }
+  }
 
   export namespace Roles {
     export namespace Params {
@@ -73,6 +83,17 @@ namespace User {
       statusCode: number;
       message: string;
       status?: boolean;
+    }
+
+    export interface Authorization {
+      statusCode: number;
+      email: string;
+      token: User.TokenKeys.Authorization;
+    }
+
+    export interface Tokens {
+      access: string;
+      refresh: string;
     }
 
     /** Ошибочные данные - объект не найден*/

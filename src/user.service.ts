@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpStatus,
   Injectable,
   Logger,
@@ -10,10 +11,16 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import {
+  BAD_REQUEST,
+  EMAIL_NOT_FOUND,
+  EMAIL_OR_PASSWORD_INCORRECT,
   EMAIL_USER_CONFLICT,
   USER_NOT_FOUND,
 } from './exceptions/user.exception';
 import { ResponseSuccessData } from './helpers/global';
+import * as bcrypt from 'bcryptjs';
+import { addHours } from 'date-fns';
+import { ConfigService } from './config/config.service';
 
 @Injectable()
 export class UserService {
@@ -23,6 +30,7 @@ export class UserService {
   constructor(
     @InjectConnection() private connection: Connection,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {
     this.userModel = this.connection.model('User') as UserModel<User>;
   }
@@ -31,7 +39,7 @@ export class UserService {
    * Sign up for User
    * @param {User.Params.CreateData} signUpUser - Data to sign up user in system
    */
-  async regUser(
+  async registration(
     signUpUser: User.Params.CreateData,
   ): Promise<User.Response.Success | User.Response.BadRequest> {
     let result;
@@ -53,6 +61,62 @@ export class UserService {
     }
     return result;
   }
+
+  /**
+   * Login for users.
+   * After successful login, generating token to get access
+   * @param {User.Params.CreateData} loginData - Entered data by user
+   */
+  async login(loginData: User.Params.CreateData) {
+    let result;
+
+    try {
+      const user = await this.findOneUserByEmail(loginData);
+      await this.comparePassword(loginData, user);
+      const token = await this.generateToken(user);
+      await this.saveToken(user.email, token);
+      result = {
+        statusCode: HttpStatus.OK,
+        token: token,
+      };
+    } catch (e) {
+      result = {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: e.message,
+        errors: BAD_REQUEST,
+      };
+    }
+    return result;
+  }
+
+  /**
+   * Comparing password from user and database.
+   * @param {User.Params.CreateData} enteredData - Entered data by user
+   * @param {User} dbData - User's data from DB
+   */
+  async comparePassword(
+    enteredData: User.Params.CreateData,
+    dbData: User,
+  ): Promise<boolean | User.Response.BadRequest> {
+    const passwordVerify = await bcrypt.compare(
+      enteredData.password,
+      dbData.password,
+    );
+    if (dbData && passwordVerify) {
+      return true;
+    } else {
+      throw new BadRequestException(EMAIL_OR_PASSWORD_INCORRECT);
+    }
+  }
+
+  /**
+   * Block login for user if he tried to login >= 5 times
+   * @param user
+   */
+  // async blockUser(user) {
+  //   user.blockExpires = addHours(new Date(), 1);
+  //   await user.save();
+  // }
 
   /**
    * Create user
@@ -83,7 +147,7 @@ export class UserService {
   }
 
   /**
-   * Update User Data
+   * Update User's data
    * @param {String} id
    * @param updateData
    */
@@ -100,7 +164,68 @@ export class UserService {
     return ResponseSuccessData('User data updated');
   }
 
+  /**
+   * List of all users in db
+   */
   async findAllUsers(): Promise<User.Response.UserData[]> {
     return await this.userModel.find().exec();
+  }
+
+  /**
+   * Find User in DB by his email
+   * @param {User.Params.EmailData} emailEntered - Find if user with entered email exists
+   */
+  private async findOneUserByEmail(emailEntered: User.Params.EmailData) {
+    const user = await this.userModel.findOne({ email: emailEntered.email });
+    if (!user) {
+      throw new NotFoundException(EMAIL_NOT_FOUND);
+    }
+    return user;
+  }
+
+  /**
+   * Generating token for access in system
+   * @param {User} user
+   */
+  private async generateToken(user: User): Promise<any> {
+    const payload = this.payLoad(user);
+    const access = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get('jwt_access'),
+    });
+
+    const refresh = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get('jwt_refresh'),
+    });
+    this.logger.debug(
+      `Generated token for user ${user.email} [${new Date()}]`,
+      UserService.name,
+    );
+    return { access: access, refresh: refresh };
+  }
+
+  private payLoad(user: User) {
+    const rolesName = [];
+    user.roles.forEach((value: any, index: number) => {
+      rolesName.push({ name: value.name });
+    });
+    return {
+      email: user.email,
+      roles: rolesName,
+    };
+  }
+
+  /**
+   * Saving token for User in db
+   * @param {String} email
+   * @param {Token.Authorization} token
+   */
+  async saveToken(email: string, token: any): Promise<void> {
+    await this.userModel.findOneAndUpdate(
+      { email: email },
+      {
+        refreshToken: token.refresh,
+        accessToken: token.access,
+      },
+    );
   }
 }

@@ -46,6 +46,9 @@ export class User extends Document {
   @Prop({ type: String, default: null })
   refreshToken: string;
 
+  @Prop({ type: Number, default: 0 })
+  attemptsLogin?: number;
+
   @Prop({ type: Date, default: Date.now })
   blockExpires: Date;
 

@@ -1,6 +1,7 @@
 /** Not found */
 export const USER_NOT_FOUND = '404001: User not found';
 export const EMAIL_NOT_FOUND = '404002: Email not found';
+export const BAD_REQUEST = 'Bad Request';
 
 /** Invalid data */
 export const INVALID_CREDENTIALS = '401001: Invalid credentials';
@@ -11,6 +12,8 @@ export const UNVERIFIED_LOCATION = '401005: Location is not verified';
 export const MFA_BACKUP_CODE_USED = '401007: Backup code is already used';
 
 export const EMAIL_DELETE_PRIMARY = '400016: Cannot delete primary email';
+export const EMAIL_OR_PASSWORD_INCORRECT =
+  '401008: Email or password are incorrect';
 
 /** */
 export const EMAIL_USER_CONFLICT =

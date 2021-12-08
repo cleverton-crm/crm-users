@@ -16,7 +16,6 @@ import { RolesProvider } from './schemas/roles.provider';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env`,
     }),
     JwtModule.registerAsync({
       useClass: JwtConfigService,
@@ -28,5 +27,6 @@ import { RolesProvider } from './schemas/roles.provider';
   ],
   controllers: [UserController, RolesController],
   providers: [ConfigService, UserService, RolesService],
+  exports: [ConfigService],
 })
 export class UserModule {}
