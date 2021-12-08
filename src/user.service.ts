@@ -42,7 +42,7 @@ export class UserService {
       await user.save();
       result = {
         statusCode: HttpStatus.OK,
-        message: 'Пользователь был создан',
+        message: 'Аккаунт успешно создан. ',
       };
     } catch (e) {
       result = {
