@@ -19,10 +19,8 @@ import {
 } from './exceptions/user.exception';
 import { ResponseSuccessData } from './helpers/global';
 import * as bcrypt from 'bcryptjs';
-import { addHours } from 'date-fns';
 import { ConfigService } from './config/config.service';
 import { Core } from 'core-types/global';
-import { User } from 'core-types/user';
 
 @Injectable()
 export class UserService {

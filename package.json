@@ -1,11 +1,16 @@
 {
   "name": "cleverdeus-users",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "",
   "author": "",
   "private": true,
   "license": "MIT",
   "scripts": {
+    "step:one": "curl -O https://dev.cleverdeus.com/config/development.json",
+    "step:two": "core-types development.json .env",
+    "setup": "yarn step:one && yarn step:two",
+    "pm2:prod": "pm2 start pm2.config.js --env development",
+    "pm2:dev": "pm2 start pm2.config.js --env development",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

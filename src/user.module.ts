@@ -16,6 +16,7 @@ import { RolesProvider } from './schemas/roles.provider';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     JwtModule.registerAsync({
       useClass: JwtConfigService,

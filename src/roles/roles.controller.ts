@@ -1,7 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { RolesService } from './roles.service';
-import { User } from 'core-types/user';
 import { Core } from 'core-types/global';
 
 @Controller('roles')
