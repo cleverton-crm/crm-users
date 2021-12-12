@@ -1892,7 +1892,7 @@ cookiejar@^2.1.2:
 
 "core-types@https://github.com/cleverdeus/core-types.git":
   version "1.0.0"
-  resolved "https://github.com/cleverdeus/core-types.git#4336faf8ee9ccc5b56aa568d61125f0c8f2453ea"
+  resolved "https://github.com/cleverdeus/core-types.git#2b2c3feedf1fc52491698095bc567e1bcd20bed4"
   dependencies:
     mongodb "^4.2.1"
     mongoose "^6.1.0"
