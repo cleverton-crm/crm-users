@@ -2,6 +2,7 @@ import {
   MongooseModuleOptions,
   MongooseOptionsFactory,
 } from '@nestjs/mongoose';
+import { getBoolean } from '../helpers/global';
 
 export class MongoConfigService implements MongooseOptionsFactory {
   createMongooseOptions(): MongooseModuleOptions {
@@ -18,12 +19,11 @@ export class MongoConfigService implements MongooseOptionsFactory {
     const port2 = process.env.MONGO_PORT2;
     const port3 = process.env.MONGO_PORT3;
 
-    if (replica) {
+    if (getBoolean(replica)) {
       urlMongo = `mongodb://${user}:${password}@${host1}:${port1},${host2}:${port2},${host3}:${port3}/${base}?authSource=admin`;
     } else {
       urlMongo = `mongodb://${user}:${password}@${host1}:${port1}/${base}?authSource=admin`;
     }
-
     return {
       uri: urlMongo,
     };
