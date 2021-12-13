@@ -39,7 +39,7 @@ export class UserService {
     private configService: ConfigService,
   ) {
     this.userModel = this.connection.model('User') as UserModel<Users>;
-    this.rolesModel = this.connection.model('Role') as RolesModel<Roles>;
+    this.rolesModel = this.connection.model('Roles') as RolesModel<Roles>;
   }
 
   /**
