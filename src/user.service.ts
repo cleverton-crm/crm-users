@@ -50,7 +50,7 @@ export class UserService {
     const user = new this.userModel(signUpUser);
 
     try {
-      //await user.save();
+      await user.save();
       result = {
         statusCode: HttpStatus.OK,
         message: 'Аккаунт успешно создан. ',
