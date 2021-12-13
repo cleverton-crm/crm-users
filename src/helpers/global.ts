@@ -1,6 +1,5 @@
 export function getBoolean(val) {
-  console.log(val);
-  return !!JSON.parse(String(val).toLowerCase());
+  return val; // !!JSON.parse(String(val).toLowerCase());
 }
 
 export const ResponseSuccessData = (message: string | Object) => {
