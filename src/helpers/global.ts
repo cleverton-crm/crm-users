@@ -1,9 +1,9 @@
 export function getBoolean(val) {
   console.log(val);
-  return val; // !!JSON.parse(String(val).toLowerCase());
+  return !!JSON.parse(String(val).toLowerCase());
 }
 
-export const ResponseSuccessData = (message: string) => {
+export const ResponseSuccessData = (message: string | Object) => {
   return {
     statusCode: 200,
     message: message,

@@ -1,11 +1,14 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
 import { UserService } from './user.service';
-import { MessagePattern } from '@nestjs/microservices';
-import { Core } from 'core-types/global';
+import { ClientProxy, MessagePattern } from '@nestjs/microservices';
+import { Core } from 'core-types';
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    @Inject('MAILER_SERVICE') private readonly mailerServiceClient: ClientProxy,
+  ) {}
 
   @MessagePattern('user:register')
   async registerUser(

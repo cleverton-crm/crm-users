@@ -1,3 +1,5 @@
+import { Transport } from '@nestjs/microservices';
+
 export class ConfigService {
   private readonly config: { [key: string]: any } = null;
 
@@ -8,8 +10,15 @@ export class ConfigService {
       jwt_access: process.env.JWT_ACCESS_EXP || '1m',
       jwt_refresh: process.env.JWT_REFRESH_EXP || '2m',
     };
-    this.config.baseUri = process.env.BASE_URI;
+    this.config.baseUrl = process.env.BASE_URL;
     this.config.gatewayPort = process.env.API_GATEWAY_PORT;
+    this.config.mailerService = {
+      options: {
+        port: process.env.MAILER_SERVICE_PORT,
+        host: process.env.MAILER_SERVICE_HOST,
+      },
+      transport: Transport.TCP,
+    };
   }
 
   get(key: string): any {

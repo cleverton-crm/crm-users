@@ -11,6 +11,7 @@ import { MongoConfigService } from './providers/mongo.service';
 import { ConfigService } from './config/config.service';
 import { UserProvider } from './schemas/user.provider';
 import { RolesProvider } from './schemas/roles.provider';
+import { ClientProxyFactory } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -27,7 +28,19 @@ import { RolesProvider } from './schemas/roles.provider';
     MongooseModule.forFeatureAsync([UserProvider, RolesProvider]),
   ],
   controllers: [UserController, RolesController],
-  providers: [ConfigService, UserService, RolesService],
+  providers: [
+    ConfigService,
+    UserService,
+    RolesService,
+    {
+      provide: 'MAILER_SERVICE',
+      useFactory: (configService: ConfigService) => {
+        const mailerServiceOptions = configService.get('mailerService');
+        return ClientProxyFactory.create(mailerServiceOptions);
+      },
+      inject: [ConfigService],
+    },
+  ],
   exports: [ConfigService],
 })
 export class UserModule {}

@@ -20,11 +20,14 @@ import {
 import { ResponseSuccessData } from './helpers/global';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from './config/config.service';
-import { Core } from 'core-types/global';
+import { Core } from 'core-types';
 
+/**
+ * @class UserService
+ */
 @Injectable()
 export class UserService {
-  private userModel: UserModel<Users>;
+  private readonly userModel: UserModel<Users>;
   private logger = new Logger(UserService.name);
 
   constructor(
@@ -162,7 +165,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(USER_NOT_FOUND);
     }
-    return ResponseSuccessData('User data updated');
+    return Core.ResponseSuccessData('User data updated');
   }
 
   /**
