@@ -50,20 +50,21 @@ export class UserService {
     const user = new this.userModel(signUpUser);
 
     try {
-      await user.save();
-      result = {
-        statusCode: HttpStatus.OK,
-        message: 'Аккаунт успешно создан. ',
-      };
       const tokenVerify = this.jwtService.sign(
         { email: user.email },
         { expiresIn: '3d' },
       );
+      user.verification = tokenVerify;
+      await user.save();
 
       this.mailerServiceClient.emit('mail:send', {
         email: user.email,
         token: tokenVerify,
       });
+      result = {
+        statusCode: HttpStatus.OK,
+        message: 'Аккаунт успешно создан. ',
+      };
       this.logger.log('Create new user');
     } catch (e) {
       result = {
@@ -241,5 +242,40 @@ export class UserService {
         accessToken: token.access,
       },
     );
+  }
+
+  async emailVerify(
+    verifyKey: string,
+  ): Promise<
+    Core.Response.Success | Core.Response.BadRequest | Core.Response.NotFound
+  > {
+    let result;
+    if (!this.jwtService.verify(verifyKey)) {
+      result = {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Токен устарел',
+        errors: 'Bad Request',
+      };
+    }
+    const user = await this.userModel.findOne({ verification: verifyKey });
+    if (user) {
+      user.isVerify = true;
+      await user.save();
+      result = {
+        statusCode: HttpStatus.OK,
+        message: 'Ваш аккаунт был подтвержден',
+      };
+    } else {
+      result = {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: USER_NOT_FOUND,
+        errors: 'User not found',
+      };
+    }
+    return result;
+  }
+
+  async forgotPassword(email: User.Params.EmailData) {
+    await this.findOneUserByEmail(email);
   }
 }

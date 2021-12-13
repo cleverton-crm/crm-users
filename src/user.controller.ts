@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Core } from 'core-types';
 
 @Controller()
@@ -41,5 +41,14 @@ export class UserController {
   @MessagePattern('user:list')
   async findAllUsers(): Promise<User.Response.UserData[]> {
     return await this.userService.findAllUsers();
+  }
+
+  @MessagePattern('user:verify')
+  async emailVerify(
+    @Payload() secretKey: string,
+  ): Promise<
+    Core.Response.Success | Core.Response.BadRequest | Core.Response.NotFound
+  > {
+    return await this.userService.emailVerify(secretKey);
   }
 }
