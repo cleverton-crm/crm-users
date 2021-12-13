@@ -1,14 +1,11 @@
-import { Controller, Get, Inject, Param } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ClientProxy, MessagePattern } from '@nestjs/microservices';
+import { MessagePattern } from '@nestjs/microservices';
 import { Core } from 'core-types';
 
 @Controller()
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    @Inject('MAILER_SERVICE') private readonly mailerServiceClient: ClientProxy,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @MessagePattern('user:register')
   async registerUser(
@@ -26,7 +23,6 @@ export class UserController {
   async createUser(
     userData: User.Params.CreateData,
   ): Promise<Core.Response.Success | Core.Response.BadRequest> {
-    console.log('TEST', userData);
     return await this.userService.createUser(userData);
   }
 

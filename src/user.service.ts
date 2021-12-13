@@ -1,7 +1,7 @@
 import {
   BadRequestException,
-  ConflictException,
   HttpStatus,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -17,10 +17,10 @@ import {
   EMAIL_USER_CONFLICT,
   USER_NOT_FOUND,
 } from './exceptions/user.exception';
-import { ResponseSuccessData } from './helpers/global';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from './config/config.service';
 import { Core } from 'core-types';
+import { ClientProxy } from '@nestjs/microservices';
 
 /**
  * @class UserService
@@ -31,6 +31,7 @@ export class UserService {
   private logger = new Logger(UserService.name);
 
   constructor(
+    @Inject('MAILER_SERVICE') private readonly mailerServiceClient: ClientProxy,
     @InjectConnection() private connection: Connection,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -46,7 +47,6 @@ export class UserService {
     signUpUser: User.Params.CreateData,
   ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     let result;
-
     const user = new this.userModel(signUpUser);
 
     try {
@@ -55,6 +55,16 @@ export class UserService {
         statusCode: HttpStatus.OK,
         message: 'Аккаунт успешно создан. ',
       };
+      const tokenVerify = this.jwtService.sign(
+        { email: user.email },
+        { expiresIn: '3d' },
+      );
+
+      this.mailerServiceClient.emit('mail:send', {
+        email: user.email,
+        token: tokenVerify,
+      });
+      this.logger.log('Create new user');
     } catch (e) {
       result = {
         statusCode: HttpStatus.CONFLICT,
