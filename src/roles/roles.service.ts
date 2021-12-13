@@ -4,7 +4,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { ROLE_NAME_CONFLICT } from '../exceptions/roles.exception';
 import { cyan, red } from 'cli-color';
-import { Core } from 'core-types/global';
+import { Core } from 'core-types';
 
 @Injectable()
 export class RolesService {

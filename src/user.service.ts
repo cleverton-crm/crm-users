@@ -20,7 +20,7 @@ import {
 import { ResponseSuccessData } from './helpers/global';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from './config/config.service';
-import { Core } from 'core-types/global';
+import { Core } from 'core-types';
 
 /**
  * @class UserService
