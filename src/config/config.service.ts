@@ -14,8 +14,8 @@ export class ConfigService {
     this.config.gatewayPort = process.env.API_GATEWAY_PORT;
     this.config.mailerService = {
       options: {
-        port: process.env.MAILER_SERVICE_PORT,
-        host: process.env.MAILER_SERVICE_HOST,
+        port: process.env.MAIL_SERVICE_PORT,
+        host: process.env.MAIL_SERVICE_HOST,
       },
       transport: Transport.TCP,
     };
