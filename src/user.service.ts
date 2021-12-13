@@ -21,6 +21,7 @@ import * as bcrypt from 'bcryptjs';
 import { ConfigService } from './config/config.service';
 import { Core } from 'core-types';
 import { ClientProxy } from '@nestjs/microservices';
+import { Roles, RolesModel } from './schemas/roles.schema';
 
 /**
  * @class UserService
@@ -28,6 +29,7 @@ import { ClientProxy } from '@nestjs/microservices';
 @Injectable()
 export class UserService {
   private readonly userModel: UserModel<Users>;
+  private readonly rolesModel: RolesModel<Roles>;
   private logger = new Logger(UserService.name);
 
   constructor(
@@ -37,6 +39,7 @@ export class UserService {
     private configService: ConfigService,
   ) {
     this.userModel = this.connection.model('User') as UserModel<Users>;
+    this.rolesModel = this.connection.model('Role') as RolesModel<Roles>;
   }
 
   /**
@@ -48,13 +51,14 @@ export class UserService {
   ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     let result;
     const user = new this.userModel(signUpUser);
-
+    const role = await this.rolesModel.findOne({ name: 'Guest' });
     try {
       const tokenVerify = this.jwtService.sign(
         { email: user.email },
         { expiresIn: '3d' },
       );
       user.verification = tokenVerify;
+      user.roles.push(role);
       await user.save();
 
       this.mailerServiceClient.emit('mail:send', {
