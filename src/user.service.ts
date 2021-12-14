@@ -22,6 +22,7 @@ import { ConfigService } from './config/config.service';
 import { Core } from 'core-types';
 import { ClientProxy } from '@nestjs/microservices';
 import { Roles, RolesModel } from './schemas/roles.schema';
+import { ForgotPassword } from './schemas/forgot.schema';
 
 /**
  * @class UserService
@@ -30,6 +31,7 @@ import { Roles, RolesModel } from './schemas/roles.schema';
 export class UserService {
   private readonly userModel: UserModel<Users>;
   private readonly rolesModel: RolesModel<Roles>;
+  private readonly forgotPasswordModel;
   private logger = new Logger(UserService.name);
 
   constructor(
@@ -38,6 +40,7 @@ export class UserService {
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {
+    this.forgotPasswordModel = this.connection.model('ForgotPassword');
     this.userModel = this.connection.model('User') as UserModel<Users>;
     this.rolesModel = this.connection.model('Roles') as RolesModel<Roles>;
   }
@@ -87,9 +90,9 @@ export class UserService {
    */
   async login(loginData: User.Params.CreateData) {
     let result;
-
+    const { email } = loginData;
     try {
-      const user = await this.findOneUserByEmail(loginData);
+      const user = (await this.findOneUserByEmail(email)) as Users;
       await this.comparePassword(loginData, user);
       const token = await this.generateToken(user);
       console.log(token);
@@ -194,10 +197,15 @@ export class UserService {
    * Find User in DB by his email
    * @param {User.Params.EmailData} emailEntered - Find if user with entered email exists
    */
-  private async findOneUserByEmail(emailEntered: User.Params.EmailData) {
-    const user = await this.userModel.findOne({ email: emailEntered.email });
+  private async findOneUserByEmail(emailEntered: string) {
+    const user = await this.userModel.findOne({ email: emailEntered }).exec();
+
     if (!user) {
-      throw new NotFoundException(EMAIL_NOT_FOUND);
+      return {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: USER_NOT_FOUND,
+        errors: 'Not Found',
+      };
     }
     return user;
   }
@@ -279,7 +287,74 @@ export class UserService {
     return result;
   }
 
-  async forgotPassword(email: User.Params.EmailData) {
-    await this.findOneUserByEmail(email);
+  async changePassword(
+    passwordData: User.Password.ChangePassword,
+  ): Promise<
+    Core.Response.Success | Core.Response.NotFound | Core.Response.BadRequest
+  > {
+    let result;
+    const user = await this.userModel
+      .findOne({ email: passwordData.email, accessToken: passwordData.access })
+      .exec();
+    if (!user) {
+      result = {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: 'Попытка взлома',
+        errors: 'Not Found',
+      };
+      // TODO: Отправить сообщение на почту
+    }
+    const passwordVerify = await bcrypt.compare(
+      passwordData.password,
+      user.password,
+    );
+    if (passwordVerify) {
+      if (passwordData.password_new === passwordData.password_confirm) {
+        user.password = passwordData.password_new;
+        await user.save();
+        result = {
+          statusCode: HttpStatus.OK,
+          message: 'Пароль был успешно изменен',
+        };
+      } else {
+        result = {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message:
+            'Пароль не изменён, так как новый пароль повторен неправильно.',
+          errors: 'Bad Request',
+        };
+      }
+    } else {
+      result = {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'Не неправильно указан старый пароль',
+        errors: 'Bad Request',
+      };
+    }
+    console.log('TEST', passwordVerify);
+    return result;
+  }
+
+  async forgotPassword(data: Core.Geo.LocationEmail) {
+    const { email } = data;
+    const user = (await this.findOneUserByEmail(email)) as Users;
+    const forgot = await this.forgotPasswordModel.create({ email: user.email });
+    const tokenVerify = this.jwtService.sign(
+      { email: user.email },
+      { expiresIn: '12h' },
+    );
+    forgot.verificationKey = tokenVerify;
+    delete data.email;
+    forgot.location.set(Date.now().toString(), data);
+    await forgot.save();
+    this.mailerServiceClient.emit('mail:forgotpassword', {
+      email: user.email,
+      token: tokenVerify,
+    });
+    return {
+      statusCode: HttpStatus.OK,
+      message:
+        'Вам отправлено письмо на указанную электронную почту для сброса пароля',
+    };
   }
 }

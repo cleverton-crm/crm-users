@@ -12,6 +12,7 @@ import { ConfigService } from './config/config.service';
 import { UserProvider } from './schemas/user.provider';
 import { RolesProvider } from './schemas/roles.provider';
 import { ClientProxyFactory } from '@nestjs/microservices';
+import { ForgotPasswordProvider } from './schemas/forgot.provider';
 
 @Module({
   imports: [
@@ -25,7 +26,11 @@ import { ClientProxyFactory } from '@nestjs/microservices';
     MongooseModule.forRootAsync({
       useClass: MongoConfigService,
     }),
-    MongooseModule.forFeatureAsync([UserProvider, RolesProvider]),
+    MongooseModule.forFeatureAsync([
+      UserProvider,
+      RolesProvider,
+      ForgotPasswordProvider,
+    ]),
   ],
   controllers: [UserController, RolesController],
   providers: [

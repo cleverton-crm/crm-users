@@ -30,12 +30,20 @@ namespace User {
     export interface EmailData {
       email: string;
     }
-
+  }
+  export namespace Password {
     /**
      * Changing the user password when the master password is available
      */
     export interface ChangePassword {
+      email: string;
       password: string;
+      password_new: string;
+      password_confirm: string;
+      access: string;
+    }
+
+    export interface ResetPassword {
       password_new: string;
       password_confirm: string;
     }

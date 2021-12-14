@@ -16,7 +16,13 @@ export class Users extends Document {
   @Prop({ type: String, default: 'member' })
   type: string; // Type objects: member
 
-  @Prop({ type: String, default: null, index: true, unique: true })
+  @Prop({
+    type: String,
+    default: null,
+    index: true,
+    unique: true,
+    lowercase: true,
+  })
   email: string; // User email
 
   @Prop({ type: String, default: null })
@@ -53,7 +59,7 @@ export class Users extends Document {
   blockExpires: Date;
 
   @Prop({ type: Map, default: {} })
-  register: Map<string, string>; // Registration data: IP, Location, Address, City and more
+  register: Map<string, any>; // Registration data: IP, Location, Address, City and more
 }
 
 export const UserSchema = SchemaFactory.createForClass(Users);

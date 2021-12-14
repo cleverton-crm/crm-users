@@ -51,4 +51,18 @@ export class UserController {
   > {
     return await this.userService.emailVerify(secretKey);
   }
+
+  @MessagePattern('password:change')
+  async changePassword(
+    @Payload() passwords: User.Password.ChangePassword,
+  ): Promise<
+    Core.Response.Success | Core.Response.NotFound | Core.Response.BadRequest
+  > {
+    return await this.userService.changePassword(passwords);
+  }
+
+  @MessagePattern('password:forgot')
+  async forgotPassword(@Payload() email: Core.Geo.LocationEmail) {
+    return this.userService.forgotPassword(email);
+  }
 }
