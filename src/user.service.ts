@@ -258,37 +258,45 @@ export class UserService {
     );
   }
 
+  /**
+   * User verification email after registraion
+   * @param {String} verifyKey
+   */
   async emailVerify(
     verifyKey: string,
   ): Promise<
     Core.Response.Success | Core.Response.BadRequest | Core.Response.NotFound
   > {
     let result;
-    if (!this.jwtService.verify(verifyKey)) {
+    try {
+      if (!this.jwtService.verify(verifyKey)) {
+        throw new BadRequestException('Токен устарел');
+      }
+      const user = await this.userModel.findOne({ verification: verifyKey });
+      if (user) {
+        user.isVerify = true;
+        await user.save();
+        result = {
+          statusCode: HttpStatus.OK,
+          message: 'Ваш аккаунт был подтвержден',
+        };
+      } else {
+        throw new NotFoundException(USER_NOT_FOUND);
+      }
+    } catch (e) {
       result = {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Токен устарел',
-        errors: 'Bad Request',
-      };
-    }
-    const user = await this.userModel.findOne({ verification: verifyKey });
-    if (user) {
-      user.isVerify = true;
-      await user.save();
-      result = {
-        statusCode: HttpStatus.OK,
-        message: 'Ваш аккаунт был подтвержден',
-      };
-    } else {
-      result = {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: USER_NOT_FOUND,
-        errors: 'User not found',
+        statusCode: e.status,
+        message: e.message,
+        errors: e.error,
       };
     }
     return result;
   }
 
+  /**
+   * Change password when user is sign in
+   * @param {User.Password.ChangePassword} passwordData
+   */
   async changePassword(
     passwordData: User.Password.ChangePassword,
   ): Promise<
@@ -337,6 +345,10 @@ export class UserService {
     return result;
   }
 
+  /**
+   * Send email to reset password
+   * @param {Core.Geo.LocationEmail} data - User's location info
+   */
   async forgotPassword(data: Core.Geo.LocationEmail) {
     const { email } = data;
     let result;
@@ -373,6 +385,10 @@ export class UserService {
     return result;
   }
 
+  /**
+   * Повторная отправка сообщения на почту для восстановления пароля
+   * @param {Core.Geo.LocationEmail} data - Информация о локации пользователя
+   */
   async refreshPasswordVerify(data: Core.Geo.LocationEmail) {
     const { email } = data;
     let result;
@@ -426,4 +442,6 @@ export class UserService {
     }
     return result;
   }
+
+  async forgotVerify() {}
 }
