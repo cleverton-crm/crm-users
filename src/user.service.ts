@@ -12,9 +12,9 @@ import { Connection } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import {
   BAD_REQUEST,
-  EMAIL_NOT_FOUND,
   EMAIL_OR_PASSWORD_INCORRECT,
   EMAIL_USER_CONFLICT,
+  RESET_PASSWORD_NOT_FOUND,
   USER_NOT_FOUND,
 } from './exceptions/user.exception';
 import * as bcrypt from 'bcryptjs';
@@ -23,6 +23,7 @@ import { Core } from 'core-types';
 import { ClientProxy } from '@nestjs/microservices';
 import { Roles, RolesModel } from './schemas/roles.schema';
 import { ForgotPassword } from './schemas/forgot.schema';
+import { addMinutes, differenceInMinutes } from 'date-fns';
 
 /**
  * @class UserService
@@ -33,6 +34,7 @@ export class UserService {
   private readonly rolesModel: RolesModel<Roles>;
   private readonly forgotPasswordModel;
   private logger = new Logger(UserService.name);
+  private SEND_ATTEMPTS_MAX = 5;
 
   constructor(
     @Inject('MAILER_SERVICE') private readonly mailerServiceClient: ClientProxy,
@@ -337,24 +339,91 @@ export class UserService {
 
   async forgotPassword(data: Core.Geo.LocationEmail) {
     const { email } = data;
+    let result;
     const user = (await this.findOneUserByEmail(email)) as Users;
-    const forgot = await this.forgotPasswordModel.create({ email: user.email });
-    const tokenVerify = this.jwtService.sign(
-      { email: user.email },
-      { expiresIn: '12h' },
-    );
-    forgot.verificationKey = tokenVerify;
-    delete data.email;
-    forgot.location.set(Date.now().toString(), data);
-    await forgot.save();
-    this.mailerServiceClient.emit('mail:forgotpassword', {
-      email: user.email,
-      token: tokenVerify,
-    });
-    return {
-      statusCode: HttpStatus.OK,
-      message:
-        'Вам отправлено письмо на указанную электронную почту для сброса пароля',
-    };
+    try {
+      const forgot = await this.forgotPasswordModel.create({
+        email: user.email,
+      });
+      const tokenVerify = this.jwtService.sign(
+        { email: user.email },
+        { expiresIn: '12h' },
+      );
+      forgot.verificationKey = tokenVerify;
+      delete data.email;
+      forgot.location.set(Date.now().toString(), data);
+      await forgot.save();
+      this.mailerServiceClient.emit('mail:forgotpassword', {
+        email: user.email,
+        token: tokenVerify,
+      });
+      result = {
+        statusCode: HttpStatus.OK,
+        message:
+          'Вам отправлено письмо на указанную электронную почту для сброса пароля',
+      };
+    } catch (e) {
+      result = {
+        statusCode: HttpStatus.CONFLICT,
+        message:
+          'На указанную почту уже было отправлено письмо для восстановления пароля',
+        errors: 'Conflict',
+      };
+    }
+    return result;
+  }
+
+  async refreshPasswordVerify(data: Core.Geo.LocationEmail) {
+    const { email } = data;
+    let result;
+    try {
+      const guest = await this.forgotPasswordModel
+        .findOne({ email: email })
+        .exec();
+      if (!guest) {
+        throw new NotFoundException(RESET_PASSWORD_NOT_FOUND);
+      }
+      if (guest.sendAttempts >= this.SEND_ATTEMPTS_MAX) {
+        throw new BadRequestException(
+          `Извините, превышено количество запросов на восстановление пароля. Максимум ${this.SEND_ATTEMPTS_MAX} попыток`,
+        );
+      } else {
+        guest.sendAttempts += 1;
+        if (guest.refreshDate === null) {
+          guest.refreshDate = new Date();
+        }
+        if (guest.refreshDate > new Date()) {
+          throw new BadRequestException(
+            `Подождите ${differenceInMinutes(
+              guest.refreshDate,
+              new Date(),
+            )} минут. Попыток ${guest.sendAttempts} из ${
+              this.SEND_ATTEMPTS_MAX
+            }`,
+          );
+        } else {
+          guest.refreshDate = addMinutes(guest.refreshDate, guest.timeout);
+          guest.timeout += 3;
+
+          await guest.save();
+
+          this.mailerServiceClient.emit('mail:forgotpassword', {
+            email: guest.email,
+            token: guest.verificationKey,
+          });
+          result = {
+            statusCode: HttpStatus.OK,
+            message: `Сообщение на сброс пароля было повторно отправлено. Попыток ${guest.sendAttempts} из ${this.SEND_ATTEMPTS_MAX}`,
+          };
+        }
+      }
+    } catch (e) {
+      result = {
+        statusCode: e.status,
+        message: e.message,
+        errors: e.error,
+      };
+    }
+    return result;
   }
 }

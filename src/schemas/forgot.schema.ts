@@ -31,6 +31,15 @@ export class ForgotPassword extends Document {
 
   @Prop({ type: Map, default: {} })
   location: Map<string, any>;
+
+  @Prop({ type: Date, default: null })
+  refreshDate: Date;
+
+  @Prop({ type: Number, default: 0 })
+  sendAttempts: number;
+
+  @Prop({ type: Number, default: 3 })
+  timeout: number;
 }
 
 export const ForgotPasswordSchema =

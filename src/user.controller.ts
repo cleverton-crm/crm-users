@@ -63,6 +63,11 @@ export class UserController {
 
   @MessagePattern('password:forgot')
   async forgotPassword(@Payload() email: Core.Geo.LocationEmail) {
-    return this.userService.forgotPassword(email);
+    return await this.userService.forgotPassword(email);
+  }
+
+  @MessagePattern('password:refreshverify')
+  async refreshPasswordVerify(@Payload() email: Core.Geo.LocationEmail) {
+    return await this.userService.refreshPasswordVerify(email);
   }
 }
