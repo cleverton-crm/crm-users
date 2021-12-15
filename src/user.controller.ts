@@ -44,6 +44,11 @@ export class UserController {
     return await this.userService.findAllUsers();
   }
 
+  @MessagePattern('user:archive')
+  async archiveUser(@Payload() archiveData: User.Params.ArchiveData) {
+    return await this.userService.archiveUser(archiveData);
+  }
+
   @MessagePattern('user:verify')
   async emailVerify(
     @Payload() secretKey: string,

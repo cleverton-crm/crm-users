@@ -2,6 +2,7 @@
 export const USER_NOT_FOUND = '404001: User not found';
 export const EMAIL_NOT_FOUND = '404002: Email not found';
 export const BAD_REQUEST = 'Bad Request';
+export const NOT_FOUND = 'Not Found';
 export const RESET_PASSWORD_NOT_FOUND =
   '404003: Message with reset password not found';
 

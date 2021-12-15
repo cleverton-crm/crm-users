@@ -15,6 +15,7 @@ import {
   BAD_REQUEST,
   EMAIL_OR_PASSWORD_INCORRECT,
   EMAIL_USER_CONFLICT,
+  NOT_FOUND,
   RESET_PASSWORD_NOT_FOUND,
   USER_NOT_FOUND,
 } from './exceptions/user.exception';
@@ -96,6 +97,11 @@ export class UserService {
     const { email } = loginData;
     try {
       const user = (await this.findOneUserByEmail(email)) as Users;
+      if (!user.active) {
+        throw new BadRequestException(
+          'Ваш аккаунт был заблокирован. Обратитесь в службу поддержки для дополнительной информации',
+        );
+      }
       await this.comparePassword(loginData, user);
       const token = await this.generateToken(user);
       console.log(token);
@@ -207,10 +213,46 @@ export class UserService {
       return {
         statusCode: HttpStatus.NOT_FOUND,
         message: USER_NOT_FOUND,
-        errors: 'Not Found',
+        errors: NOT_FOUND,
       };
     }
     return user;
+  }
+
+  async archiveUser(archiveData: User.Params.ArchiveData) {
+    let result;
+    const { request } = archiveData;
+    const user = await this.userModel.findOne({ _id: archiveData.id });
+    if (user) {
+      console.log(request);
+      if (request.email === user.email) {
+        result = {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Невозможно себя заблокировать или разблокировать',
+        };
+      } else {
+        user.active = archiveData.active;
+        await user.save();
+        if (!user.active) {
+          result = {
+            statusCode: HttpStatus.OK,
+            message: 'Аккаунт пользователя успешно заблокирован',
+          };
+        } else {
+          result = {
+            statusCode: HttpStatus.OK,
+            message: 'Аккаунт пользователя успешно разблокирован',
+          };
+        }
+      }
+    } else {
+      result = {
+        statusCode: HttpStatus.NOT_FOUND,
+        message: USER_NOT_FOUND,
+        errors: NOT_FOUND,
+      };
+    }
+    return result;
   }
 
   /**
@@ -451,34 +493,49 @@ export class UserService {
     let result;
     try {
       if (!this.jwtService.verify(data.verification)) {
-        throw new BadRequestException('Токен устарел');
-      }
-      const password = await this.forgotPasswordModel.findOne({
-        verificationKey: data.verification,
-      });
-      if (password.stepVerification) {
-        throw new BadRequestException(
-          'Верификация с почты для сброса пароля уже была пройдена ранее',
-        );
-      }
-      if (password.stepReset) {
-        throw new BadRequestException('Сброс пароля уже был произведен');
-      }
-      if (password) {
-        password.stepVerification = true;
-        await password.save();
+        // throw new BadRequestException('Токен устарел');
         result = {
-          statusCode: HttpStatus.OK,
-          message: 'Верификация для сброса пароля успешно пройдена',
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Неверный токен',
+          errors: 'Bad Request',
         };
+      } else {
+        const password = await this.forgotPasswordModel.findOne({
+          verificationKey: data.verification,
+        });
+        if (password.stepVerification) {
+          throw new BadRequestException(
+            'Верификация с почты для сброса пароля уже была пройдена ранее',
+          );
+        }
+        if (password.stepReset) {
+          throw new BadRequestException('Сброс пароля уже был произведен');
+        }
+        if (password) {
+          password.stepVerification = true;
+          await password.save();
+          result = {
+            statusCode: HttpStatus.OK,
+            message: 'Верификация для сброса пароля успешно пройдена',
+          };
+        }
       }
     } catch (e) {
-      result = {
-        statusCode: e.status,
-        message: e.message,
-        errors: e.error,
-      };
+      if (e.name === 'JsonWebTokenError') {
+        result = {
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'Неверный токен',
+          errors: 'Bad Request',
+        };
+      } else {
+        result = {
+          statusCode: e.status,
+          message: e.message,
+          errors: e.error,
+        };
+      }
     }
+    console.log(result);
     return result;
   }
 
@@ -489,27 +546,25 @@ export class UserService {
   async resetPassword(data: User.Password.ResetPassword) {
     let result;
     try {
-      const newData = await this.forgotPasswordModel
+      const forgotpassword = await this.forgotPasswordModel
         .findOne({ verificationKey: data.verificationKey })
         .exec();
-      const user = await this.userModel
-        .findOne({ email: newData.email })
-        .exec();
-      if (!newData.stepVerification) {
+      if (!forgotpassword.stepVerification) {
         throw new BadRequestException(
           'Верификация с почты для сброса пароля еще не была пройдена',
         );
       }
-      if (newData.stepReset) {
+      if (forgotpassword.stepReset) {
         throw new BadRequestException('Сброс пароля уже был произведен');
       }
-      if (newData) {
+      if (forgotpassword) {
         if (data.password_new === data.password_confirm) {
-          newData.password = data.password_new;
-          newData.stepReset = true;
-          await newData.save();
-          user.password = newData.password;
-          await user.save();
+          forgotpassword.stepReset = true;
+          const hashpassword = await bcrypt.hash(data.password_new, 10);
+          await this.userModel.findOneAndUpdate(
+            { email: forgotpassword.email },
+            { password: hashpassword },
+          );
           result = {
             statusCode: HttpStatus.OK,
             message: 'Пароль был успешно изменен',

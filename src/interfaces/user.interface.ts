@@ -34,6 +34,16 @@ namespace User {
     export interface VerificationLink {
       verification: string;
     }
+
+    export interface TokenData {
+      email: string;
+    }
+
+    export interface ArchiveData {
+      id: string;
+      request: User.Params.TokenData;
+      active: boolean;
+    }
   }
   export namespace Password {
     /**
