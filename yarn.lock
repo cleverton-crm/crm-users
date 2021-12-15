@@ -1906,7 +1906,7 @@ cookiejar@^2.1.2:
 
 "core-types@https://github.com/cleverdeus/core-types.git":
   version "1.0.0"
-  resolved "https://github.com/cleverdeus/core-types.git#49aee52f0bb4a8615eba58f90a0ca7b346bc4482"
+  resolved "https://github.com/cleverdeus/core-types.git#0b2a8ae5b0ead42902e13a82b3f413b32a99439f"
   dependencies:
     "@nestjs/swagger" "^5.1.5"
     mongodb "^4.2.1"
