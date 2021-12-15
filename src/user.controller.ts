@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Core } from 'core-types';
+import VerificationLink = User.Params.VerificationLink;
 
 @Controller()
 export class UserController {
@@ -69,5 +70,15 @@ export class UserController {
   @MessagePattern('password:refreshverify')
   async refreshPasswordVerify(@Payload() email: Core.Geo.LocationEmail) {
     return await this.userService.refreshPasswordVerify(email);
+  }
+
+  @MessagePattern('password:forgotverify')
+  async forgotVerify(@Payload() userData: User.Params.VerificationLink) {
+    return await this.userService.forgotVerify(userData);
+  }
+
+  @MessagePattern('password:reset')
+  async resetPassword(@Payload() userData: User.Password.ResetPassword) {
+    return await this.userService.resetPassword(userData);
   }
 }

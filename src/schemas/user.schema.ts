@@ -60,6 +60,9 @@ export class Users extends Document {
 
   @Prop({ type: Map, default: {} })
   register: Map<string, any>; // Registration data: IP, Location, Address, City and more
+
+  @Prop({ type: Boolean, default: false })
+  isGDRP: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(Users);

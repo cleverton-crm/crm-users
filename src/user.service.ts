@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpStatus,
   Inject,
   Injectable,
@@ -48,8 +49,8 @@ export class UserService {
   }
 
   /**
-   * Sign up for User
-   * @param {User.Params.CreateData} signUpUser - Data to sign up user in system
+   * Регистрация пользователя
+   * @param {User.Params.CreateData} signUpUser - Введенные данные для регистрации
    */
   async registration(
     signUpUser: User.Params.CreateData,
@@ -86,9 +87,9 @@ export class UserService {
   }
 
   /**
-   * Login for users.
-   * After successful login, generating token to get access
-   * @param {User.Params.CreateData} loginData - Entered data by user
+   * Логин пользователя.
+   * После успешного логина, генерируется токен для входа
+   * @param {User.Params.CreateData} loginData - Введенные данные для логина
    */
   async login(loginData: User.Params.CreateData) {
     let result;
@@ -114,9 +115,9 @@ export class UserService {
   }
 
   /**
-   * Comparing password from user and database.
-   * @param {User.Params.CreateData} enteredData - Entered data by user
-   * @param {User} dbData - User's data from DB
+   * Сравнение паролей
+   * @param {User.Params.CreateData} enteredData - Введенные данные
+   * @param {User} dbData - Данные в бд
    */
   async comparePassword(
     enteredData: User.Params.CreateData,
@@ -171,7 +172,7 @@ export class UserService {
   }
 
   /**
-   * Update User's data
+   * Update Обновление данных пользователя
    * @param {String} id
    * @param updateData
    */
@@ -189,15 +190,15 @@ export class UserService {
   }
 
   /**
-   * List of all users in db
+   * Лист всех пользователей
    */
   async findAllUsers(): Promise<User.Response.UserData[]> {
     return await this.userModel.find().exec();
   }
 
   /**
-   * Find User in DB by his email
-   * @param {User.Params.EmailData} emailEntered - Find if user with entered email exists
+   * Поиск пользователя по электронной почте
+   * @param {User.Params.EmailData} emailEntered
    */
   private async findOneUserByEmail(emailEntered: string) {
     const user = await this.userModel.findOne({ email: emailEntered }).exec();
@@ -213,7 +214,7 @@ export class UserService {
   }
 
   /**
-   * Generating token for access in system
+   * Генерация токена для доступа в систему
    * @param {User} user
    */
   private async generateToken(user: Users): Promise<any> {
@@ -244,7 +245,7 @@ export class UserService {
   }
 
   /**
-   * Saving token for User in db
+   * Сохранение токена в бд
    * @param {String} email
    * @param {Token.Authorization} token
    */
@@ -259,8 +260,8 @@ export class UserService {
   }
 
   /**
-   * User verification email after registraion
-   * @param {String} verifyKey
+   * Верификация аккаунта после регистрации пользователя
+   * @param {String} verifyKey - Верификационный ключ
    */
   async emailVerify(
     verifyKey: string,
@@ -294,7 +295,7 @@ export class UserService {
   }
 
   /**
-   * Change password when user is sign in
+   * Изменение пароля пользователем
    * @param {User.Password.ChangePassword} passwordData
    */
   async changePassword(
@@ -329,8 +330,7 @@ export class UserService {
       } else {
         result = {
           statusCode: HttpStatus.BAD_REQUEST,
-          message:
-            'Пароль не изменён, так как новый пароль повторен неправильно.',
+          message: 'Пароль не изменён, так как пароли не совпадают.',
           errors: 'Bad Request',
         };
       }
@@ -346,8 +346,8 @@ export class UserService {
   }
 
   /**
-   * Send email to reset password
-   * @param {Core.Geo.LocationEmail} data - User's location info
+   * Отправка сообщения на почту для сброса пароля
+   * @param {Core.Geo.LocationEmail} data - Информация о локации пользователя
    */
   async forgotPassword(data: Core.Geo.LocationEmail) {
     const { email } = data;
@@ -443,5 +443,90 @@ export class UserService {
     return result;
   }
 
-  async forgotVerify() {}
+  /**
+   * Верификация пользователя по токену с почты для сброса пароля
+   * @param {User.Params.VerificationLink} data - Токен для верификации
+   */
+  async forgotVerify(data: User.Params.VerificationLink) {
+    let result;
+    try {
+      if (!this.jwtService.verify(data.verification)) {
+        throw new BadRequestException('Токен устарел');
+      }
+      const password = await this.forgotPasswordModel.findOne({
+        verificationKey: data.verification,
+      });
+      if (password.stepVerification) {
+        throw new BadRequestException(
+          'Верификация с почты для сброса пароля уже была пройдена ранее',
+        );
+      }
+      if (password.stepReset) {
+        throw new BadRequestException('Сброс пароля уже был произведен');
+      }
+      if (password) {
+        password.stepVerification = true;
+        await password.save();
+        result = {
+          statusCode: HttpStatus.OK,
+          message: 'Верификация для сброса пароля успешно пройдена',
+        };
+      }
+    } catch (e) {
+      result = {
+        statusCode: e.status,
+        message: e.message,
+        errors: e.error,
+      };
+    }
+    return result;
+  }
+
+  /**
+   * Сброс пароля пользователя после успешной верификации
+   * @param {User.Password.ResetPassword} data - Ввод нового пароля
+   */
+  async resetPassword(data: User.Password.ResetPassword) {
+    let result;
+    try {
+      const newData = await this.forgotPasswordModel
+        .findOne({ verificationKey: data.verificationKey })
+        .exec();
+      const user = await this.userModel
+        .findOne({ email: newData.email })
+        .exec();
+      if (!newData.stepVerification) {
+        throw new BadRequestException(
+          'Верификация с почты для сброса пароля еще не была пройдена',
+        );
+      }
+      if (newData.stepReset) {
+        throw new BadRequestException('Сброс пароля уже был произведен');
+      }
+      if (newData) {
+        if (data.password_new === data.password_confirm) {
+          newData.password = data.password_new;
+          newData.stepReset = true;
+          await newData.save();
+          user.password = newData.password;
+          await user.save();
+          result = {
+            statusCode: HttpStatus.OK,
+            message: 'Пароль был успешно изменен',
+          };
+        } else {
+          throw new BadRequestException(
+            'Пароль не изменён, так как пароли не совпадают',
+          );
+        }
+      }
+    } catch (e) {
+      result = {
+        statusCode: e.status,
+        message: e.message,
+        errors: e.error,
+      };
+    }
+    return result;
+  }
 }

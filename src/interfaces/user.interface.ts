@@ -30,6 +30,10 @@ namespace User {
     export interface EmailData {
       email: string;
     }
+
+    export interface VerificationLink {
+      verification: string;
+    }
   }
   export namespace Password {
     /**
@@ -46,6 +50,7 @@ namespace User {
     export interface ResetPassword {
       password_new: string;
       password_confirm: string;
+      verificationKey: string;
     }
   }
 
