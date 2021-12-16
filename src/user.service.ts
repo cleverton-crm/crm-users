@@ -26,6 +26,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { Roles, RolesModel } from './schemas/roles.schema';
 import { ForgotPassword } from './schemas/forgot.schema';
 import { addMinutes, differenceInMinutes } from 'date-fns';
+import { ResponseSuccessData } from './helpers/global';
 
 /**
  * @class UserService
@@ -97,14 +98,13 @@ export class UserService {
     const { email } = loginData;
     try {
       const user = (await this.findOneUserByEmail(email)) as Users;
-      if (!user.active) {
-        throw new BadRequestException(
-          'Ваш аккаунт был заблокирован. Обратитесь в службу поддержки для дополнительной информации',
-        );
-      }
+      // if (user.active) {
+      //   throw new BadRequestException(
+      //     'Ваш аккаунт был заблокирован. Обратитесь в службу поддержки для дополнительной информации',
+      //   );
+      // }
       await this.comparePassword(loginData, user);
       const token = await this.generateToken(user);
-      console.log(token);
       await this.saveToken(user.email, token);
       result = {
         statusCode: HttpStatus.OK,
@@ -178,24 +178,6 @@ export class UserService {
   }
 
   /**
-   * Update Обновление данных пользователя
-   * @param {String} id
-   * @param updateData
-   */
-  async updateUser(
-    id: string,
-    updateData: User.Params.PasswordData,
-  ): Promise<Core.Response.Success | Core.Response.NotFound> {
-    const user = await this.userModel
-      .findOneAndUpdate({ _id: id }, updateData)
-      .exec();
-    if (!user) {
-      throw new NotFoundException(USER_NOT_FOUND);
-    }
-    return Core.ResponseSuccessData('User data updated');
-  }
-
-  /**
    * Лист всех пользователей
    */
   async findAllUsers(): Promise<User.Response.UserData[]> {
@@ -207,14 +189,11 @@ export class UserService {
    * @param {User.Params.EmailData} emailEntered
    */
   private async findOneUserByEmail(emailEntered: string) {
-    const user = await this.userModel.findOne({ email: emailEntered }).exec();
-
+    const user = await this.userModel
+      .findOne({ email: emailEntered, active: true })
+      .exec();
     if (!user) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        message: USER_NOT_FOUND,
-        errors: NOT_FOUND,
-      };
+      throw new Error(USER_NOT_FOUND);
     }
     return user;
   }

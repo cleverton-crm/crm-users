@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { RolesService } from './roles.service';
 import { Core } from 'core-types';
 
@@ -12,5 +12,15 @@ export class RolesController {
     roleData: User.Roles.Params.CreateData,
   ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     return await this.rolesService.createRole(roleData);
+  }
+
+  @MessagePattern('roles:update')
+  async updateRole(@Payload() roleData: User.Roles.Params.UpdateData) {
+    return await this.rolesService.updateRole(roleData);
+  }
+
+  @MessagePattern('roles:list')
+  async findAllRoles(): Promise<User.Response.RolesData[]> {
+    return await this.rolesService.findAllRoles();
   }
 }

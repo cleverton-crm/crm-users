@@ -23,10 +23,6 @@ namespace User {
       password: string;
     }
 
-    export interface UpdatedData {
-      userId: string;
-      data: User.Params.PasswordData;
-    }
     export interface EmailData {
       email: string;
     }
@@ -86,6 +82,11 @@ namespace User {
         name: string;
         permissions: string;
       }
+      export interface UpdateData {
+        id: string;
+        permissions?: string;
+        priority: number;
+      }
     }
   }
 
@@ -104,6 +105,14 @@ namespace User {
       email: string;
       password: string;
       roles: User.IUserRolesArray;
+    }
+
+    export interface RolesData {
+      _id: string;
+      id?: string;
+      name: string;
+      permissions: string;
+      priority: number;
     }
   }
 }

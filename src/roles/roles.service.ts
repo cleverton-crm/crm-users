@@ -1,10 +1,20 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Roles, RolesModel } from '../schemas/roles.schema';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-import { ROLE_NAME_CONFLICT } from '../exceptions/roles.exception';
+import {
+  ROLE_NAME_CONFLICT,
+  ROLE_NOT_FOUND,
+} from '../exceptions/roles.exception';
 import { cyan, red } from 'cli-color';
 import { Core } from 'core-types';
+import { ResponseSuccessData } from '../helpers/global';
+import { BAD_REQUEST } from '../exceptions/user.exception';
 
 @Injectable()
 export class RolesService {
@@ -16,7 +26,7 @@ export class RolesService {
   }
 
   /**
-   * Creating Role for User
+   * Создание роли для пользователей
    * @param {User.Roles.Params.CreateData} createRole - Data for creating role
    * @return ({Promise<User.Response.Success | User.Response.BadRequest>})
    */
@@ -43,6 +53,42 @@ export class RolesService {
       this.logger.error(red(JSON.stringify(result)));
     }
 
+    return result;
+  }
+
+  /**
+   * Изменение данных роли
+   * @param {User.Roles.Params.UpdateData} roleData
+   */
+  async updateRole(roleData: User.Roles.Params.UpdateData) {
+    const role = await this.roleModel
+      .findOneAndUpdate({ _id: roleData.id }, roleData)
+      .exec();
+    console.log(role);
+    if (!role) {
+      throw new NotFoundException(ROLE_NOT_FOUND);
+    }
+    return ResponseSuccessData('Role data updated');
+  }
+
+  /**
+   * Список всех ролей
+   */
+  async findAllRoles(): Promise<User.Response.RolesData[]> {
+    let result;
+    try {
+      result = {
+        statusCode: HttpStatus.OK,
+        message: 'User List',
+        data: await this.roleModel.find().exec(),
+      };
+    } catch (e) {
+      result = {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: e.message,
+        errors: e.error,
+      };
+    }
     return result;
   }
 }

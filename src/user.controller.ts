@@ -2,7 +2,6 @@ import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Core } from 'core-types';
-import VerificationLink = User.Params.VerificationLink;
 
 @Controller()
 export class UserController {
@@ -25,18 +24,6 @@ export class UserController {
     userData: User.Params.CreateData,
   ): Promise<Core.Response.Success | Core.Response.BadRequest> {
     return await this.userService.createUser(userData);
-  }
-
-  @MessagePattern('user:update')
-  async updateUser(updateData: User.Params.UpdatedData) {
-    const js = {
-      pattern: 'user:create',
-      data: { id: 'ce51ebd3-32b1-4ae6-b7ef-e018126c4cc4' },
-    };
-    return await this.userService.updateUser(
-      updateData.userId,
-      updateData.data,
-    );
   }
 
   @MessagePattern('user:list')
