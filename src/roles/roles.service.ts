@@ -79,7 +79,7 @@ export class RolesService {
     try {
       result = {
         statusCode: HttpStatus.OK,
-        message: 'User List',
+        message: 'Roles List',
         data: await this.roleModel.find().exec(),
       };
     } catch (e) {

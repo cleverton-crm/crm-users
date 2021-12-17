@@ -181,7 +181,21 @@ export class UserService {
    * Лист всех пользователей
    */
   async findAllUsers(): Promise<User.Response.UserData[]> {
-    return await this.userModel.find().exec();
+    let result;
+    try {
+      result = {
+        statusCode: HttpStatus.OK,
+        message: 'User List',
+        data: await this.userModel.find().exec(),
+      };
+    } catch (e) {
+      result = {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: e.message,
+        errors: e.error,
+      };
+    }
+    return result;
   }
 
   /**
