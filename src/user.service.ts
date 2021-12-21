@@ -21,7 +21,7 @@ import {
 } from './exceptions/user.exception';
 import * as bcrypt from 'bcryptjs';
 import { ConfigService } from './config/config.service';
-import { Core } from 'core-types';
+import { Core } from 'crm-core';
 import { ClientProxy } from '@nestjs/microservices';
 import { Roles, RolesModel } from './schemas/roles.schema';
 import { ForgotPassword } from './schemas/forgot.schema';
@@ -56,7 +56,7 @@ export class UserService {
    */
   async registration(
     signUpUser: User.Params.CreateData,
-  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
+  ): Promise<Core.Response.Success | Core.Response.Error> {
     let result;
     const user = new this.userModel(signUpUser);
     const role = await this.rolesModel.findOne({ name: 'Guest' });
@@ -280,7 +280,7 @@ export class UserService {
   }
 
   /**
-   * Сохранение токена в бд
+   * Сохранение токена в базе
    * @param {String} email
    * @param {Token.Authorization} token
    */

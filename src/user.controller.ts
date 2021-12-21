@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { Core } from 'core-types';
+import { Core } from 'crm-core';
 
 @Controller()
 export class UserController {
