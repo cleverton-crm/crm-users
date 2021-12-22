@@ -1,13 +1,13 @@
 {
   "name": "crm-users",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "description": "",
   "author": "",
   "private": true,
   "license": "MIT",
   "scripts": {
     "step:one": "curl -O https://task.cleverton.ru/config/development.json",
-    "step:two": "core-types development.json .env",
+    "step:two": "node scripts/index.js development.json .env",
     "setup": "yarn step:one && yarn step:two",
     "pm2:prod": "pm2 start pm2.config.js --env development",
     "pm2:dev": "pm2 start pm2.config.js --env development",
