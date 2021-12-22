@@ -16,6 +16,7 @@ async function bootstrap() {
       port: config.get('port'),
     },
   } as TcpOptions);
+
   logger.log(
     cyan(`User microservices start on port TCP:${config.get('port')}`),
   );
