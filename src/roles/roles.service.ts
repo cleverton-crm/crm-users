@@ -1,20 +1,11 @@
-import {
-  HttpStatus,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { Roles, RolesModel } from '../schemas/roles.schema';
-import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
-import {
-  ROLE_NAME_CONFLICT,
-  ROLE_NOT_FOUND,
-} from '../exceptions/roles.exception';
-import { cyan, red } from 'cli-color';
-import { Core } from 'core-types';
-import { ResponseSuccessData } from '../helpers/global';
-import { BAD_REQUEST } from '../exceptions/user.exception';
+import {HttpStatus, Injectable, Logger, NotFoundException,} from '@nestjs/common';
+import {Roles, RolesModel} from '../schemas/roles.schema';
+import {InjectConnection} from '@nestjs/mongoose';
+import {Connection} from 'mongoose';
+import {ROLE_NAME_CONFLICT, ROLE_NOT_FOUND,} from '../exceptions/roles.exception';
+import {cyan, red} from 'cli-color';
+import {Core} from 'crm-core';
+import {ResponseSuccessData} from '../helpers/global';
 
 @Injectable()
 export class RolesService {

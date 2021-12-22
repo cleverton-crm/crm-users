@@ -6,13 +6,13 @@ import { Core } from 'crm-core';
 @Controller()
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  @MessagePattern('user:register')
-  async registerUser(
-    userData: User.Params.CreateData,
-  ): Promise<Core.Response.Success | Core.Response.BadRequest> {
-    return await this.userService.registration(userData);
-  }
+  //
+  // @MessagePattern('user:register')
+  // async registerUser(
+  //   userData: User.Params.CreateData,
+  // ): Promise<Core.Response.Success | Core.Response.BadRequest> {
+  //   return await this.userService.registration(userData);
+  // }
 
   @MessagePattern('user:login')
   async loginUser(userData: User.Params.CreateData) {

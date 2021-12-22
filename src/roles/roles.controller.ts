@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { RolesService } from './roles.service';
-import { Core } from 'core-types';
+import { Core } from 'crm-core';
 
 @Controller('roles')
 export class RolesController {
