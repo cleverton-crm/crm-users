@@ -48,6 +48,7 @@ export class UserService {
     this.forgotPasswordModel = this.connection.model('ForgotPassword');
     this.userModel = this.connection.model('User') as UserModel<Users>;
     this.rolesModel = this.connection.model('Roles') as RolesModel<Roles>;
+    console.log(mailerServiceClient)
   }
 
   /**
@@ -59,7 +60,7 @@ export class UserService {
   ): Promise<Core.Response.Success | Core.Response.Error> {
     let result;
     const user = new this.userModel(signUpUser);
-    const role = await this.rolesModel.findOne({ name: 'Guest' });
+    const role = await this.rolesModel.findOne({ name: 'Admin' });
     try {
       const tokenVerify = this.jwtService.sign(
         { email: user.email },
@@ -73,9 +74,10 @@ export class UserService {
         email: user.email,
         token: tokenVerify,
       });
+
       result = {
         statusCode: HttpStatus.OK,
-        message: 'Аккаунт успешно создан. ',
+        message: 'Поздравляем! Аккаунт успешно зарегистрирован. Активируйте ссылка на указанном вами email!',
       };
       this.logger.log('Create new user');
     } catch (e) {
