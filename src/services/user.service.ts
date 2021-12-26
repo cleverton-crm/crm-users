@@ -1,13 +1,12 @@
 import {
   BadRequestException,
-  ConflictException,
   HttpStatus,
   Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { UserModel, Users } from './schemas/user.schema';
+import { UserModel, Users } from '../schemas/user.schema';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -18,15 +17,14 @@ import {
   NOT_FOUND,
   RESET_PASSWORD_NOT_FOUND,
   USER_NOT_FOUND,
-} from './exceptions/user.exception';
+} from '../exceptions/user.exception';
 import * as bcrypt from 'bcryptjs';
-import { ConfigService } from './config/config.service';
+import { ConfigService } from '../config/config.service';
 import { Core } from 'crm-core';
 import { ClientProxy } from '@nestjs/microservices';
-import { Roles, RolesModel } from './schemas/roles.schema';
-import { ForgotPassword } from './schemas/forgot.schema';
+import { Roles, RolesModel } from '../schemas/roles.schema';
+import { ForgotPassword } from '../schemas/forgot.schema';
 import { addMinutes, differenceInMinutes } from 'date-fns';
-import { ResponseSuccessData } from './helpers/global';
 
 /**
  * @class UserService
@@ -40,7 +38,10 @@ export class UserService {
   private SEND_ATTEMPTS_MAX = 5;
 
   constructor(
-    @Inject('MAILER_SERVICE') private readonly mailerServiceClient: ClientProxy,
+    @Inject('MAILER_SERVICE')
+    private readonly mailerServiceClient: ClientProxy,
+    @Inject('PROFILE_SERVICE')
+    private readonly profileServiceClient: ClientProxy,
     @InjectConnection() private connection: Connection,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -48,7 +49,6 @@ export class UserService {
     this.forgotPasswordModel = this.connection.model('ForgotPassword');
     this.userModel = this.connection.model('User') as UserModel<Users>;
     this.rolesModel = this.connection.model('Roles') as RolesModel<Roles>;
-    console.log(mailerServiceClient)
   }
 
   /**
@@ -58,17 +58,29 @@ export class UserService {
   async registration(
     signUpUser: User.Params.CreateData,
   ): Promise<Core.Response.Success | Core.Response.Error> {
-    let result;
+    let result, roleName;
     const user = new this.userModel(signUpUser);
-    const role = await this.rolesModel.findOne({ name: 'Admin' });
+    if (signUpUser.isAdmin) {
+      roleName = 'Admin';
+    } else {
+      roleName = 'Guest';
+    }
+    const role = await this.rolesModel.findOne({ name: roleName });
     try {
       const tokenVerify = this.jwtService.sign(
         { email: user.email },
         { expiresIn: '3d' },
       );
+      user.permissions = roleName;
       user.verification = tokenVerify;
       user.roles.push(role);
       await user.save();
+
+      this.profileServiceClient.emit('profile:empty', {
+        email: user.email,
+        owner: user._id,
+      });
+      console.log(this.profileServiceClient);
 
       this.mailerServiceClient.emit('mail:send', {
         email: user.email,
@@ -77,7 +89,8 @@ export class UserService {
 
       result = {
         statusCode: HttpStatus.OK,
-        message: 'Поздравляем! Аккаунт успешно зарегистрирован. Активируйте ссылка на указанном вами email!',
+        message:
+          'Поздравляем! Аккаунт успешно зарегистрирован. Активируйте ссылка на указанном вами email!',
       };
       this.logger.log('Create new user');
     } catch (e) {
