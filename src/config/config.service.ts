@@ -19,6 +19,14 @@ export class ConfigService {
       },
       transport: Transport.TCP,
     };
+
+    this.config.profileService = {
+      options: {
+        port: process.env.PROFILE_SERVICE_PORT,
+        host: process.env.PROFILE_SERVICE_HOST,
+      },
+      transport: Transport.TCP,
+    };
   }
 
   get(key: string): any {
