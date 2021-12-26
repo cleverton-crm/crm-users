@@ -1,4 +1,4 @@
-import { ForgotPasswordSchema } from './forgot.schema';
+import { ForgotPasswordSchema } from '../schemas/forgot.schema';
 
 export const ForgotPasswordProvider = {
   name: 'ForgotPassword',

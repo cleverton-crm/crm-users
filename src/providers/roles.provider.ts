@@ -1,4 +1,4 @@
-import { RolesSchema } from './roles.schema';
+import { RolesSchema } from '../schemas/roles.schema';
 
 export const RolesProvider = {
   name: 'Roles',
