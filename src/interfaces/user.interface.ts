@@ -14,9 +14,16 @@ namespace User {
    *
    */
   export namespace Params {
+    /** Создание пользователя
+     * @memberOf User.Params
+     * @param email
+     * @param password
+     * @param isAdmin
+     * */
     export interface CreateData {
       email: string;
       password: string;
+      isAdmin: boolean;
     }
 
     export interface PasswordData {
@@ -60,7 +67,7 @@ namespace User {
     }
   }
 
-  export type IUserRolesName = 'Admin' | 'Guest' | 'Customer';
+  export type IUserRolesName = 'Admin' | 'Guest' | 'Manager';
 
   export interface IUserRoles {
     name: string;
@@ -76,12 +83,16 @@ namespace User {
     }
   }
 
+  /** Роли пользователей */
   export namespace Roles {
+    /** Параметры для роли */
     export namespace Params {
       export interface CreateData {
         name: string;
         permissions: string;
       }
+
+      /** Параметры для обновления */
       export interface UpdateData {
         id: string;
         permissions?: string;
