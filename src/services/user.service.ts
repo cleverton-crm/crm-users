@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserModel, Users } from '../schemas/user.schema';
 import { InjectConnection } from '@nestjs/mongoose';
@@ -299,7 +300,7 @@ export class UserService {
    * @param {String} email
    * @param {Token.Authorization} token
    */
-  async saveToken(email: string, token: any): Promise<void> {
+  private async saveToken(email: string, token: any): Promise<void> {
     await this.userModel.findOneAndUpdate(
       { email: email },
       {
@@ -590,6 +591,39 @@ export class UserService {
         errors: e.error,
       };
     }
+    return result;
+  }
+
+  /**
+   * Получение нового токена
+   * @param refreshToken
+   */
+  async refreshToken(refreshToken: User.Params.RefreshToken): Promise<any> {
+    let result = {};
+    const user = await this.userModel.findOne(refreshToken);
+    if (!user) {
+      return (result = {
+        statusCode: HttpStatus.UNAUTHORIZED,
+        message: 'User not authorized. Please try again.',
+        errors: 'Unauthorized',
+      });
+    }
+    try {
+      const tokenOld = this.jwtService.verify(user.refreshToken);
+      const tokenNew = await this.generateToken(user);
+      result = {
+        statusCode: HttpStatus.OK,
+        message: 'Congratulations! You has been refresh token',
+        token: { access: tokenNew.access },
+      };
+    } catch (e) {
+      result = {
+        statusCode: e.status,
+        message: e.message,
+        errors: e.error,
+      };
+    }
+
     return result;
   }
 }

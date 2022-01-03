@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { UserService } from '../services/user.service';
+import { UserService } from '../services';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { Core } from 'crm-core';
 
@@ -72,5 +72,11 @@ export class UserController {
   @MessagePattern('password:reset')
   async resetPassword(@Payload() userData: User.Password.ResetPassword) {
     return await this.userService.resetPassword(userData);
+  }
+
+  @MessagePattern('user:refresh:token')
+  async userRefreshToken(@Payload() refreshToken: User.Params.RefreshToken) {
+    console.log(refreshToken);
+    return await this.userService.refreshToken(refreshToken);
   }
 }

@@ -26,6 +26,10 @@ namespace User {
       isAdmin: boolean;
     }
 
+    export interface RefreshToken {
+      readonly refreshToken: string;
+    }
+
     export interface PasswordData {
       password: string;
     }
@@ -116,6 +120,10 @@ namespace User {
       email: string;
       password: string;
       roles: User.IUserRolesArray;
+    }
+
+    export interface AccessToken {
+      readonly accessToken: string;
     }
 
     export interface RolesData {
