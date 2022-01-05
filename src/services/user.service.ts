@@ -26,6 +26,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { Roles, RolesModel } from '../schemas/roles.schema';
 import { ForgotPassword } from '../schemas/forgot.schema';
 import { addMinutes, differenceInMinutes } from 'date-fns';
+import { firstValueFrom } from 'rxjs';
 
 /**
  * @class UserService
@@ -64,7 +65,7 @@ export class UserService {
     if (signUpUser.isAdmin) {
       roleName = 'Admin';
     } else {
-      roleName = 'Guest';
+      roleName = 'Member';
     }
     const role = await this.rolesModel.findOne({ name: roleName });
     try {
@@ -77,11 +78,10 @@ export class UserService {
       user.roles.push(role);
       await user.save();
 
-      this.profileServiceClient.emit('profile:empty', {
+      this.profileServiceClient.emit('profile:new', {
         email: user.email,
         owner: user._id,
       });
-      console.log(this.profileServiceClient);
 
       this.mailerServiceClient.emit('mail:send', {
         email: user.email,
@@ -114,13 +114,14 @@ export class UserService {
     const { email } = loginData;
     try {
       const user = (await this.findOneUserByEmail(email)) as Users;
-      // if (user.active) {
-      //   throw new BadRequestException(
-      //     'Ваш аккаунт был заблокирован. Обратитесь в службу поддержки для дополнительной информации',
-      //   );
-      // }
+      const profile = await firstValueFrom(
+        this.profileServiceClient.send('profile:get:id', {
+          owner: user._id,
+        }),
+      );
+
       await this.comparePassword(loginData, user);
-      const token = await this.generateToken(user);
+      const token = await this.generateToken(user, profile.id);
       await this.saveToken(user.email, token);
       result = {
         statusCode: HttpStatus.OK,
@@ -267,9 +268,10 @@ export class UserService {
   /**
    * Генерация токена для доступа в систему
    * @param {User} user
+   * @param pid
    */
-  private async generateToken(user: Users): Promise<any> {
-    const payload = this.payLoad(user);
+  private async generateToken(user: Users, pid: string): Promise<any> {
+    const payload = this.payLoad(user, pid);
     const access = this.jwtService.sign(payload, {
       expiresIn: this.configService.get('jwt_access'),
     });
@@ -284,12 +286,13 @@ export class UserService {
     return { access: access, refresh: refresh };
   }
 
-  private payLoad(user: Users) {
+  private payLoad(user: Users, pid: string) {
     const rolesName = [];
     user.roles.forEach((value: any, index: number) => {
       rolesName.push({ name: value.name });
     });
     return {
+      userID: pid,
       email: user.email,
       roles: rolesName,
     };
@@ -601,6 +604,11 @@ export class UserService {
   async refreshToken(refreshToken: User.Params.RefreshToken): Promise<any> {
     let result = {};
     const user = await this.userModel.findOne(refreshToken);
+    const profile = await firstValueFrom(
+      this.profileServiceClient.send('profile:get:id', {
+        owner: user._id,
+      }),
+    );
     if (!user) {
       return (result = {
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -610,7 +618,7 @@ export class UserService {
     }
     try {
       const tokenOld = this.jwtService.verify(user.refreshToken);
-      const tokenNew = await this.generateToken(user);
+      const tokenNew = await this.generateToken(user, profile.id);
       result = {
         statusCode: HttpStatus.OK,
         message: 'Congratulations! You has been refresh token',
