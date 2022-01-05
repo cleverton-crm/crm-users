@@ -27,6 +27,8 @@ import { Roles, RolesModel } from '../schemas/roles.schema';
 import { ForgotPassword } from '../schemas/forgot.schema';
 import { addMinutes, differenceInMinutes } from 'date-fns';
 import { firstValueFrom } from 'rxjs';
+import { Profile } from '../schemas';
+import { Model } from 'mongoose';
 
 /**
  * @class UserService
@@ -35,6 +37,7 @@ import { firstValueFrom } from 'rxjs';
 export class UserService {
   private readonly userModel: UserModel<Users>;
   private readonly rolesModel: RolesModel<Roles>;
+  private readonly profileModel: Model<Profile>;
   private readonly forgotPasswordModel;
   private logger = new Logger(UserService.name);
   private SEND_ATTEMPTS_MAX = 5;
@@ -42,8 +45,6 @@ export class UserService {
   constructor(
     @Inject('MAILER_SERVICE')
     private readonly mailerServiceClient: ClientProxy,
-    @Inject('PROFILE_SERVICE')
-    private readonly profileServiceClient: ClientProxy,
     @InjectConnection() private connection: Connection,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -51,6 +52,7 @@ export class UserService {
     this.forgotPasswordModel = this.connection.model('ForgotPassword');
     this.userModel = this.connection.model('User') as UserModel<Users>;
     this.rolesModel = this.connection.model('Roles') as RolesModel<Roles>;
+    this.profileModel = this.connection.model('Profile') as Model<Profile>;
   }
 
   /**
@@ -78,7 +80,7 @@ export class UserService {
       user.roles.push(role);
       await user.save();
 
-      this.profileServiceClient.emit('profile:new', {
+      await this.profileModel.create({
         email: user.email,
         owner: user._id,
       });
@@ -114,11 +116,9 @@ export class UserService {
     const { email } = loginData;
     try {
       const user = (await this.findOneUserByEmail(email)) as Users;
-      const profile = await firstValueFrom(
-        this.profileServiceClient.send('profile:get:id', {
-          owner: user._id,
-        }),
-      );
+      const profile = await this.profileModel
+        .findOne({ owner: user._id })
+        .exec();
 
       await this.comparePassword(loginData, user);
       const token = await this.generateToken(user, profile.id);
@@ -604,11 +604,7 @@ export class UserService {
   async refreshToken(refreshToken: User.Params.RefreshToken): Promise<any> {
     let result = {};
     const user = await this.userModel.findOne(refreshToken);
-    const profile = await firstValueFrom(
-      this.profileServiceClient.send('profile:get:id', {
-        owner: user._id,
-      }),
-    );
+    const profile = await this.profileModel.findOne({ owner: user._id }).exec();
     if (!user) {
       return (result = {
         statusCode: HttpStatus.UNAUTHORIZED,
