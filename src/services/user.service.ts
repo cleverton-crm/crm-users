@@ -67,7 +67,7 @@ export class UserService {
     if (signUpUser.isAdmin) {
       roleName = 'Admin';
     } else {
-      roleName = 'Member';
+      roleName = 'Manager';
     }
     const role = await this.rolesModel.findOne({ name: roleName });
     try {
@@ -119,7 +119,7 @@ export class UserService {
       const profile = await this.profileModel
         .findOne({ owner: user._id })
         .exec();
-
+      console.log(user, profile);
       await this.comparePassword(loginData, user);
       const token = await this.generateToken(user, profile.id);
       await this.saveToken(user.email, token);
@@ -288,6 +288,11 @@ export class UserService {
 
   private payLoad(user: Users, pid: string) {
     const rolesName = [];
+    if (user.roles.length === 0 || user.roles[0] === null) {
+      throw new BadRequestException(
+        'Не установлена роль. Обратитесь в службу поддержки',
+      );
+    }
     user.roles.forEach((value: any, index: number) => {
       rolesName.push({ name: value.name });
     });
