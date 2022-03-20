@@ -293,10 +293,13 @@ export class UserService {
         'Не установлена роль. Обратитесь в службу поддержки',
       );
     }
+    let filterOwner = {}
     user.roles.forEach((value: any, index: number) => {
+      value.name === 'Manager' ? filterOwner = Object.assign(filterOwner,{owner: pid}): filterOwner
       rolesName.push({ name: value.name });
     });
     return {
+      filterQuery: filterOwner,
       userID: pid,
       email: user.email,
       roles: rolesName,
