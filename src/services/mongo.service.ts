@@ -22,7 +22,7 @@ export class MongoConfigService implements MongooseOptionsFactory {
     if (Core.GetBoolean(replica)) {
       urlMongo = `mongodb://${user}:${password}@${mongoConnectionHosts.join(',')}/${base}?authSource=admin`;
     } else {
-      urlMongo = `mongodb://${user}:${password}@${mongoConnectionHosts[0].join()}/${base}?authSource=admin`;
+      urlMongo = `mongodb://${user}:${password}@${mongoConnectionHosts[0]}/${base}?authSource=admin`;
     }
     return {
       uri: urlMongo,
